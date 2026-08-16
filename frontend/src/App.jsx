@@ -5,6 +5,7 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import HomePage from './pages/HomePage';
+import NoteEditorPage from './pages/NoteEditorPage';
 import './index.css';
 
 export default function App() {
@@ -17,6 +18,8 @@ export default function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/home" element={<HomePage />} />
+            <Route path="/notes/new" element={<NoteEditorPage />} />
+            <Route path="/notes/:id/edit" element={<NoteEditorPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

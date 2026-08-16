@@ -3,6 +3,7 @@ const cors = require('cors');
 const env = require('./config/env');
 const authRoutes = require('./routes/authRoutes');
 const healthRoutes = require('./routes/healthRoutes');
+const noteRoutes = require('./routes/noteRoutes');
 const { notFoundHandler, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(express.json());
 
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/notes', noteRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

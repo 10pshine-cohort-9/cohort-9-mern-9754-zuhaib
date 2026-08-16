@@ -41,3 +41,18 @@ export function apiPost(path, data, token) {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 }
+
+export function apiPut(path, data, token) {
+  return request(path, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+}
+
+export function apiDelete(path, token) {
+  return request(path, {
+    method: 'DELETE',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+}
