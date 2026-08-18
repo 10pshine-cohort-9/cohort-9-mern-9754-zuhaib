@@ -1,15 +1,28 @@
-# Notes App — Backend auth
+# Notes App — Frontend scaffold
 
-Adds JWT authentication on top of the backend foundation PR.
+React (Vite) client scaffold with API helpers and routing shell.
 
-## Endpoints
+## Structure
 
-- `POST /api/auth/register` — `{ "name", "email", "password" }`
-- `POST /api/auth/login` — `{ "email", "password" }`
-- `GET /api/auth/me` — `Authorization: Bearer <token>`
+```
+frontend/
+├── src/
+│   ├── hooks/       # useAuth
+│   ├── services/    # API client + auth API
+│   ├── App.jsx
+│   └── main.jsx
+├── vite.config.js   # proxies /api → backend
+└── package.json
+```
 
-Passwords are hashed with bcrypt. API responses never include `password_hash`.
+## Run
 
-## Merge order
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-Merge **backend foundation** into `develop` before this PR.
+App: `http://localhost:5173`
+
+Auth pages and styling arrive in the follow-up frontend PR. Requires the backend auth PR for full sign-in flow.
