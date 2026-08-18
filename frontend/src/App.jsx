@@ -1,23 +1,26 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-
-/**
- * Temporary landing view until auth pages are added in the next PR.
- */
-function PlaceholderPage() {
-  return (
-    <main style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>Notes App</h1>
-      <p>Frontend scaffold is ready. Auth UI arrives in the next PR.</p>
-    </main>
-  );
-}
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import HomePage from './pages/HomePage';
+import './index.css';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="*" element={<PlaceholderPage />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/home" element={<HomePage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
