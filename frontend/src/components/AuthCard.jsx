@@ -1,5 +1,10 @@
 import { Link } from 'react-router-dom';
 
+/**
+ * Glass-style card wrapper for login and signup screens.
+ * @param {{ title: string, subtitle?: string, children: import('react').ReactNode, footer?: import('react').ReactNode }} props - Card content props.
+ * @returns {import('react').ReactElement} Styled authentication card.
+ */
 export function AuthCard({ title, subtitle, children, footer }) {
   return (
     <div className="auth-shell">

@@ -3,6 +3,10 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
 import { useAuth } from '../hooks/useAuth';
 
+/**
+ * Registration form that creates a new user account.
+ * @returns {import('react').ReactElement} Signup screen.
+ */
 export default function SignupPage() {
   const navigate = useNavigate();
   const { register, isAuthenticated, loading } = useAuth();
@@ -16,6 +20,11 @@ export default function SignupPage() {
     return <Navigate to="/home" replace />;
   }
 
+  /**
+   * Submits registration data to the auth API.
+   * @param {import('react').FormEvent<HTMLFormElement>} event - Form submit event.
+   * @returns {Promise<void>}
+   */
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');

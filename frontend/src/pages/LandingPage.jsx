@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
+/**
+ * Public landing page with links to sign up or sign in.
+ * @returns {import('react').ReactElement} Landing screen.
+ */
 export default function LandingPage() {
   const { isAuthenticated, loading } = useAuth();
 

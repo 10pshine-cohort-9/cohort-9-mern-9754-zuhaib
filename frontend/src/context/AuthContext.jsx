@@ -3,19 +3,33 @@ import { fetchCurrentUser, loginUser, registerUser } from '../services/authApi';
 
 const TOKEN_KEY = 'notes_app_token';
 
+/** @type {import('react').Context<null | Object>} */
 export const AuthContext = createContext(null);
 
+/**
+ * Provides authentication state and actions to the component tree.
+ * @param {{ children: import('react').ReactNode }} props - Child components.
+ * @returns {import('react').ReactElement} Context provider.
+ */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [loading, setLoading] = useState(true);
 
+  /**
+   * Saves the JWT and user profile to state and localStorage.
+   * @param {string} nextToken - JWT returned by the API.
+   * @param {Object} nextUser - Public user profile.
+   */
   const persistSession = useCallback((nextToken, nextUser) => {
     localStorage.setItem(TOKEN_KEY, nextToken);
     setToken(nextToken);
     setUser(nextUser);
   }, []);
 
+  /**
+   * Clears stored credentials and resets auth state.
+   */
   const clearSession = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
@@ -25,6 +39,10 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let cancelled = false;
 
+    /**
+     * Restores the session from a stored token on initial load.
+     * @returns {Promise<void>}
+     */
     async function bootstrap() {
       if (!token) {
         setLoading(false);
@@ -54,6 +72,11 @@ export function AuthProvider({ children }) {
     };
   }, [token, clearSession]);
 
+  /**
+   * Authenticates a user and stores the returned session.
+   * @param {{ email: string, password: string }} credentials - Login payload.
+   * @returns {Promise<Object>} Public user profile.
+   */
   const login = useCallback(
     async (credentials) => {
       const response = await loginUser(credentials);
@@ -63,6 +86,11 @@ export function AuthProvider({ children }) {
     [persistSession]
   );
 
+  /**
+   * Registers a new user and stores the returned session.
+   * @param {{ name: string, email: string, password: string }} payload - Registration payload.
+   * @returns {Promise<Object>} Public user profile.
+   */
   const register = useCallback(
     async (payload) => {
       const response = await registerUser(payload);
@@ -72,6 +100,9 @@ export function AuthProvider({ children }) {
     [persistSession]
   );
 
+  /**
+   * Ends the current session and removes the stored token.
+   */
   const logout = useCallback(() => {
     clearSession();
   }, [clearSession]);

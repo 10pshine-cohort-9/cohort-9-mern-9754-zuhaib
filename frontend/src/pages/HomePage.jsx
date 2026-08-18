@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
+/**
+ * Protected home screen shown after a successful login.
+ * @returns {import('react').ReactElement} Authenticated home screen.
+ */
 export default function HomePage() {
   const { user, logout } = useAuth();
 

@@ -7,6 +7,10 @@ import SignupPage from './pages/SignupPage';
 import HomePage from './pages/HomePage';
 import './index.css';
 
+/**
+ * Root application component with public and protected routes.
+ * @returns {import('react').ReactElement} Routed application tree.
+ */
 export default function App() {
   return (
     <AuthProvider>

@@ -3,6 +3,10 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
 import { useAuth } from '../hooks/useAuth';
 
+/**
+ * Login form that authenticates against the backend API.
+ * @returns {import('react').ReactElement} Login screen.
+ */
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, isAuthenticated, loading } = useAuth();
@@ -15,6 +19,11 @@ export default function LoginPage() {
     return <Navigate to="/home" replace />;
   }
 
+  /**
+   * Submits login credentials to the auth API.
+   * @param {import('react').FormEvent<HTMLFormElement>} event - Form submit event.
+   * @returns {Promise<void>}
+   */
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');
