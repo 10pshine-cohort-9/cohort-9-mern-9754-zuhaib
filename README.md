@@ -64,6 +64,7 @@ cp .env.example .env
 | `JWT_SECRET`    | Long random secret used to sign tokens           |
 | `JWT_EXPIRES_IN`| Token lifetime (e.g. `7d`)                       |
 | `CORS_ORIGIN`   | Frontend origin (default `http://localhost:5173`)|
+| `LOG_LEVEL`     | Pino level: `debug`, `info`, `warn`, `error`     |
 
 ### Frontend (`frontend/.env`)
 
@@ -93,7 +94,9 @@ Or from the MySQL client:
 SOURCE /absolute/path/to/backend/sql/init.sql;
 ```
 
-This creates the `notes_app` database and the `users` table with a unique email constraint.
+This creates the `notes_app` database plus `users` and `notes` tables. Email is unique. Notes belong to a user (`user_id`) and store HTML `content` for the rich-text editor.
+
+If the database already exists, re-run `backend/sql/init.sql` (the notes table uses `CREATE TABLE IF NOT EXISTS`).
 
 ## Run the backend
 
@@ -116,6 +119,16 @@ Auth endpoints:
 - `POST /api/auth/register` — `{ "name", "email", "password" }`
 - `POST /api/auth/login` — `{ "email", "password" }`
 - `GET /api/auth/me` — `Authorization: Bearer <token>`
+
+Notes endpoints (JWT required):
+
+- `GET /api/notes`
+- `GET /api/notes/:id`
+- `POST /api/notes` — `{ "title", "content" }`
+- `PATCH /api/notes/:id` — `{ "title", "content" }`
+- `DELETE /api/notes/:id`
+
+Error responses use `{ "message", "code" }`. Production hides stack traces and unexpected error details.
 
 ## Run the frontend
 
@@ -141,6 +154,29 @@ App: `http://localhost:5173`
 4. Frontend stores the JWT in `localStorage` and sends it as `Authorization: Bearer <token>`.
 5. Protected routes call `GET /api/auth/me`; middleware verifies the JWT and attaches `req.user`.
 
+## Logging
+
+The backend uses **Pino**.
+
+- **Development:** pretty-printed logs (`pino-pretty`), default level `debug`.
+- **Production (`NODE_ENV=production`):** JSON logs, default level `info`, no stack traces in HTTP responses.
+- HTTP logs (via `pino-http`) include method, URL, status code, response time, and `X-Request-Id`.
+- Application logs cover startup, database failures, auth success/failure, note create/update/delete, and unexpected exceptions.
+- Passwords, JWTs, and `Authorization` headers are redacted. Request bodies are not logged.
+
+Example:
+
+```text
+INFO  Server started  port=5000 env=development
+INFO  User authenticated  userId=1
+INFO  POST /api/notes 200  responseTime=18
+ERROR Unexpected exception  err.message="connect ECONNREFUSED"
+```
+
+## Error handling
+
+`AppError` carries `statusCode`, `message`, and `code`. Controllers/services throw it; `errorMiddleware` maps it to JSON. Unexpected errors are logged at `error` and return `500` with a generic message in production.
+
 ## Out of scope (later PRs)
 
-Notes, rich text editor, collections, Pino logging, SonarQube, Mocha/Chai, Jest, search/filter, realtime.
+Collections, Socket.IO, import/export, search, SonarQube, Mocha/Chai, Jest.

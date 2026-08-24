@@ -1,14 +1,27 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const env = require('../config/env');
+const logger = require('../config/logger');
 const userRepository = require('../repositories/userRepository');
 const AppError = require('../utils/AppError');
 
 const SALT_ROUNDS = 10;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Ensures the request body is a plain object.
+ * @param {unknown} body
+ * @throws {AppError}
+ */
+function requireObjectBody(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new AppError('Request body must be a JSON object.', 400, 'INVALID_BODY');
+  }
+}
 
 /**
  * Removes sensitive fields from a database user row.
- * @param {Object} user - Raw user row from the database.
+ * @param {Object} user
  * @returns {{ id: number, name: string, email: string, createdAt: Date, updatedAt: Date }}
  */
 function toPublicUser(user) {
@@ -23,8 +36,8 @@ function toPublicUser(user) {
 
 /**
  * Signs a JWT for an authenticated user.
- * @param {{ id: number, email: string }} user - User identity.
- * @returns {string} Signed JWT.
+ * @param {{ id: number, email: string }} user
+ * @returns {string}
  */
 function signToken(user) {
   return jwt.sign(
@@ -36,8 +49,8 @@ function signToken(user) {
 
 /**
  * Validates registration payload fields.
- * @param {{ name?: string, email?: string, password?: string }} input - Request body.
- * @returns {string[]} Validation error messages.
+ * @param {{ name?: string, email?: string, password?: string }} input
+ * @returns {string[]}
  */
 function validateRegisterInput({ name, email, password }) {
   const errors = [];
@@ -46,7 +59,7 @@ function validateRegisterInput({ name, email, password }) {
     errors.push('Name must be at least 2 characters.');
   }
 
-  if (!email || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+  if (!email || typeof email !== 'string' || !EMAIL_PATTERN.test(email.trim())) {
     errors.push('A valid email is required.');
   }
 
@@ -59,17 +72,19 @@ function validateRegisterInput({ name, email, password }) {
 
 /**
  * Validates login payload fields.
- * @param {{ email?: string, password?: string }} input - Request body.
- * @returns {string[]} Validation error messages.
+ * @param {{ email?: string, password?: string }} input
+ * @returns {string[]}
  */
 function validateLoginInput({ email, password }) {
   const errors = [];
 
   if (!email || typeof email !== 'string' || !email.trim()) {
     errors.push('Email is required.');
+  } else if (!EMAIL_PATTERN.test(email.trim())) {
+    errors.push('A valid email is required.');
   }
 
-  if (!password || typeof password !== 'string') {
+  if (!password || typeof password !== 'string' || password.length === 0) {
     errors.push('Password is required.');
   }
 
@@ -78,29 +93,32 @@ function validateLoginInput({ email, password }) {
 
 /**
  * Registers a new user account.
- * @param {{ name: string, email: string, password: string }} params - Registration data.
- * @returns {Promise<{ user: Object, token: string }>} Public user and JWT.
+ * @param {{ name: string, email: string, password: string }} params
+ * @returns {Promise<{ user: Object, token: string }>}
  */
-async function register({ name, email, password }) {
-  const errors = validateRegisterInput({ name, email, password });
+async function register(params) {
+  requireObjectBody(params);
+  const errors = validateRegisterInput(params);
   if (errors.length > 0) {
-    throw new AppError(errors.join(' '), 400);
+    throw new AppError(errors.join(' '), 400, 'VALIDATION_ERROR');
   }
 
-  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = params.email.trim().toLowerCase();
   const existing = await userRepository.findByEmail(normalizedEmail);
   if (existing) {
-    throw new AppError('An account with this email already exists.', 409);
+    logger.warn({ email: normalizedEmail }, 'Registration rejected: duplicate email');
+    throw new AppError('An account with this email already exists.', 409, 'EMAIL_EXISTS');
   }
 
-  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  const passwordHash = await bcrypt.hash(params.password, SALT_ROUNDS);
   const user = await userRepository.createUser({
-    name: name.trim(),
+    name: params.name.trim(),
     email: normalizedEmail,
     passwordHash,
   });
 
   const token = signToken(user);
+  logger.info({ userId: user.id }, 'User registered');
 
   return {
     user: toPublicUser(user),
@@ -110,28 +128,32 @@ async function register({ name, email, password }) {
 
 /**
  * Authenticates a user with email and password.
- * @param {{ email: string, password: string }} params - Login credentials.
- * @returns {Promise<{ user: Object, token: string }>} Public user and JWT.
+ * @param {{ email: string, password: string }} params
+ * @returns {Promise<{ user: Object, token: string }>}
  */
-async function login({ email, password }) {
-  const errors = validateLoginInput({ email, password });
+async function login(params) {
+  requireObjectBody(params);
+  const errors = validateLoginInput(params);
   if (errors.length > 0) {
-    throw new AppError(errors.join(' '), 400);
+    throw new AppError(errors.join(' '), 400, 'VALIDATION_ERROR');
   }
 
-  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = params.email.trim().toLowerCase();
   const user = await userRepository.findByEmail(normalizedEmail);
 
   if (!user) {
-    throw new AppError('Invalid email or password.', 401);
+    logger.warn({ email: normalizedEmail }, 'Authentication failed');
+    throw new AppError('Invalid email or password.', 401, 'INVALID_CREDENTIALS');
   }
 
-  const passwordMatches = await bcrypt.compare(password, user.password_hash);
+  const passwordMatches = await bcrypt.compare(params.password, user.password_hash);
   if (!passwordMatches) {
-    throw new AppError('Invalid email or password.', 401);
+    logger.warn({ userId: user.id }, 'Authentication failed');
+    throw new AppError('Invalid email or password.', 401, 'INVALID_CREDENTIALS');
   }
 
   const token = signToken(user);
+  logger.info({ userId: user.id }, 'User authenticated');
 
   return {
     user: toPublicUser(user),
@@ -141,13 +163,13 @@ async function login({ email, password }) {
 
 /**
  * Returns the public profile for an authenticated user.
- * @param {number} userId - Authenticated user id.
- * @returns {Promise<Object>} Public user profile.
+ * @param {number} userId
+ * @returns {Promise<Object>}
  */
 async function getMe(userId) {
   const user = await userRepository.findById(userId);
   if (!user) {
-    throw new AppError('User not found.', 404);
+    throw new AppError('User not found.', 404, 'USER_NOT_FOUND');
   }
   return toPublicUser(user);
 }
