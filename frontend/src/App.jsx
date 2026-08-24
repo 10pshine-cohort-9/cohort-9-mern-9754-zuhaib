@@ -5,6 +5,8 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import HomePage from './pages/HomePage';
+import NoteEditorPage from './pages/NoteEditorPage';
+import ProfilePage from './pages/ProfilePage';
 import './index.css';
 
 /**
@@ -21,6 +23,9 @@ export default function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/home" element={<HomePage />} />
+            <Route path="/notes/new" element={<NoteEditorPage />} />
+            <Route path="/notes/:id" element={<NoteEditorPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

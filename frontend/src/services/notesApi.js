@@ -1,0 +1,51 @@
+import { apiDelete, apiGet, apiPatch, apiPost } from './api';
+
+/**
+ * Lists notes for the authenticated user.
+ * @param {string} token
+ * @returns {Promise<Object>}
+ */
+export function fetchNotes(token) {
+  return apiGet('/api/notes', token);
+}
+
+/**
+ * Loads a single note by id.
+ * @param {string|number} id
+ * @param {string} token
+ * @returns {Promise<Object>}
+ */
+export function fetchNote(id, token) {
+  return apiGet(`/api/notes/${id}`, token);
+}
+
+/**
+ * Creates a note with HTML content.
+ * @param {{ title: string, content: string }} payload
+ * @param {string} token
+ * @returns {Promise<Object>}
+ */
+export function createNote(payload, token) {
+  return apiPost('/api/notes', payload, token);
+}
+
+/**
+ * Updates an existing note.
+ * @param {string|number} id
+ * @param {{ title: string, content: string }} payload
+ * @param {string} token
+ * @returns {Promise<Object>}
+ */
+export function updateNote(id, payload, token) {
+  return apiPatch(`/api/notes/${id}`, payload, token);
+}
+
+/**
+ * Deletes a note by id.
+ * @param {string|number} id
+ * @param {string} token
+ * @returns {Promise<Object>}
+ */
+export function deleteNote(id, token) {
+  return apiDelete(`/api/notes/${id}`, token);
+}

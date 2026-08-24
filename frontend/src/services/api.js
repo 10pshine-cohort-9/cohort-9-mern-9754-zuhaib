@@ -25,8 +25,12 @@ async function request(path, options = {}) {
   }
 
   if (!response.ok) {
+    if (response.status === 401 && headers.Authorization) {
+      window.dispatchEvent(new Event('notes-auth-expired'));
+    }
     const error = new Error(body?.message || 'Something went wrong.');
     error.status = response.status;
+    error.code = body?.code;
     error.body = body;
     throw error;
   }
@@ -36,9 +40,9 @@ async function request(path, options = {}) {
 
 /**
  * Performs an authenticated or public GET request.
- * @param {string} path - API path.
- * @param {string} [token] - Optional Bearer token.
- * @returns {Promise<Object|null>} Parsed JSON response.
+ * @param {string} path
+ * @param {string} [token]
+ * @returns {Promise<Object|null>}
  */
 export function apiGet(path, token) {
   return request(path, {
@@ -49,15 +53,43 @@ export function apiGet(path, token) {
 
 /**
  * Performs an authenticated or public POST request.
- * @param {string} path - API path.
- * @param {Object} data - JSON request body.
- * @param {string} [token] - Optional Bearer token.
- * @returns {Promise<Object|null>} Parsed JSON response.
+ * @param {string} path
+ * @param {Object} data
+ * @param {string} [token]
+ * @returns {Promise<Object|null>}
  */
 export function apiPost(path, data, token) {
   return request(path, {
     method: 'POST',
     body: JSON.stringify(data),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+}
+
+/**
+ * Performs an authenticated PATCH request.
+ * @param {string} path
+ * @param {Object} data
+ * @param {string} [token]
+ * @returns {Promise<Object|null>}
+ */
+export function apiPatch(path, data, token) {
+  return request(path, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+}
+
+/**
+ * Performs an authenticated DELETE request.
+ * @param {string} path
+ * @param {string} [token]
+ * @returns {Promise<Object|null>}
+ */
+export function apiDelete(path, token) {
+  return request(path, {
+    method: 'DELETE',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 }
