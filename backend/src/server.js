@@ -1,5 +1,6 @@
 const app = require('./app');
 const env = require('./config/env');
+const logger = require('./config/logger');
 const { testConnection } = require('./config/db');
 
 /**
@@ -9,13 +10,13 @@ const { testConnection } = require('./config/db');
 async function start() {
   try {
     await testConnection();
-    console.log('MySQL connection established.');
+    logger.info({ database: env.db.database }, 'MySQL connection established');
 
     app.listen(env.port, () => {
-      console.log(`Server running on http://localhost:${env.port}`);
+      logger.info({ port: env.port, env: env.nodeEnv }, 'Server started');
     });
   } catch (error) {
-    console.error('Failed to start server:', error.message);
+    logger.error({ err: error }, 'Database connection failed during startup');
     process.exit(1);
   }
 }
