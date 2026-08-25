@@ -72,6 +72,20 @@ export function AuthProvider({ children }) {
     };
   }, [token, clearSession]);
 
+  useEffect(() => {
+    /**
+     * Clears the session when a protected API call returns 401.
+     */
+    function handleExpired() {
+      clearSession();
+    }
+
+    window.addEventListener('notes-auth-expired', handleExpired);
+    return () => {
+      window.removeEventListener('notes-auth-expired', handleExpired);
+    };
+  }, [clearSession]);
+
   /**
    * Authenticates a user and stores the returned session.
    * @param {{ email: string, password: string }} credentials - Login payload.
