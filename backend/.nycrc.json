@@ -1,0 +1,11 @@
+{
+  "all": true,
+  "include": ["src/**/*.js"],
+  "exclude": ["src/server.js"],
+  "reporter": ["text", "lcov", "text-summary"],
+  "check-coverage": false,
+  "branches": 70,
+  "lines": 70,
+  "functions": 70,
+  "statements": 70
+}

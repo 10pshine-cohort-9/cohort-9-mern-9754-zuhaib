@@ -2,6 +2,7 @@ const pino = require('pino');
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const level = process.env.LOG_LEVEL || (nodeEnv === 'production' ? 'info' : 'debug');
+const usePretty = nodeEnv !== 'production' && nodeEnv !== 'test' && level !== 'silent';
 
 /**
  * Shared Pino logger. Secrets and credentials are redacted.
@@ -21,7 +22,7 @@ const logger = pino({
     ],
     censor: '[Redacted]',
   },
-  ...(nodeEnv !== 'production'
+  ...(usePretty
     ? {
         transport: {
           target: 'pino-pretty',

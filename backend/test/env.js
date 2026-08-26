@@ -1,0 +1,11 @@
+process.env.NODE_ENV = 'test';
+process.env.LOG_LEVEL = 'silent';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_at_least_32_characters_long';
+process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
+process.env.DB_HOST = process.env.DB_HOST || 'localhost';
+process.env.DB_PORT = process.env.DB_PORT || '3306';
+process.env.DB_USER = process.env.DB_USER || 'test';
+process.env.DB_PASSWORD = process.env.DB_PASSWORD || 'test';
+process.env.DB_NAME = process.env.DB_NAME || 'notes_app_test';
+process.env.CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+process.env.PORT = process.env.PORT || '5000';

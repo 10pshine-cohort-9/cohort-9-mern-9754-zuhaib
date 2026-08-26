@@ -11,10 +11,15 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# Build
+# Build & coverage
 dist/
 build/
 coverage/
+.nyc_output/
+*.lcov
+
+# SonarQube
+.scannerwork/
 
 # Editors
 .idea/
