@@ -3,17 +3,33 @@ const { pool } = require('../config/db');
 const NOTE_COLUMNS = 'id, user_id, title, content, created_at, updated_at';
 
 /**
- * Lists notes owned by a user, newest first.
+ * Lists notes owned by a user with optional search and sort.
  * @param {number} userId
+ * @param {{ search?: string, sort?: string }} [options]
  * @returns {Promise<Object[]>}
  */
-async function findAllByUserId(userId) {
+async function findAllByUserId(userId, { search = '', sort = 'newest' } = {}) {
+  const conditions = ['user_id = :userId'];
+  const params = { userId };
+
+  if (search) {
+    conditions.push('(title LIKE :search OR content LIKE :search)');
+    params.search = `%${search}%`;
+  }
+
+  let orderBy = 'updated_at DESC, id DESC';
+  if (sort === 'oldest') {
+    orderBy = 'updated_at ASC, id ASC';
+  } else if (sort === 'title') {
+    orderBy = 'title ASC, id ASC';
+  }
+
   const [rows] = await pool.execute(
     `SELECT ${NOTE_COLUMNS}
      FROM notes
-     WHERE user_id = :userId
-     ORDER BY updated_at DESC, id DESC`,
-    { userId }
+     WHERE ${conditions.join(' AND ')}
+     ORDER BY ${orderBy}`,
+    params
   );
   return rows;
 }

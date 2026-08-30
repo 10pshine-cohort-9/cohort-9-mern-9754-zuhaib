@@ -84,13 +84,40 @@ function assertOwnedNote(note, userId) {
   return note;
 }
 
+const MAX_SEARCH_LENGTH = 100;
+const VALID_SORTS = ['newest', 'oldest', 'title'];
+
+/**
+ * Parses and validates list query parameters.
+ * @param {Object} query
+ * @returns {{ search: string, sort: string }}
+ */
+function parseListFilters(query = {}) {
+  let sort = typeof query.sort === 'string' ? query.sort.trim() : 'newest';
+  if (!VALID_SORTS.includes(sort)) {
+    throw new AppError('Invalid sort value. Use newest, oldest, or title.', 400, 'VALIDATION_ERROR');
+  }
+
+  let search = '';
+  if (query.q != null && String(query.q).trim()) {
+    search = String(query.q)
+      .trim()
+      .slice(0, MAX_SEARCH_LENGTH)
+      .replace(/[%_\\]/g, '\\$&');
+  }
+
+  return { search, sort };
+}
+
 /**
  * Lists notes for the authenticated user.
  * @param {number} userId
+ * @param {Object} [query]
  * @returns {Promise<Object[]>}
  */
-async function listNotes(userId) {
-  const notes = await noteRepository.findAllByUserId(userId);
+async function listNotes(userId, query = {}) {
+  const filters = parseListFilters(query);
+  const notes = await noteRepository.findAllByUserId(userId, filters);
   return notes.map(toPublicNote);
 }
 
