@@ -6,32 +6,40 @@ import { useAuth } from '../hooks/useAuth';
 import { deleteNote, fetchNotes } from '../services/notesApi';
 
 /**
- * Authenticated dashboard with notes list, create, edit, and delete.
+ * Authenticated dashboard with notes list, search, filters, create, edit, and delete.
  * @returns {import('react').ReactElement}
  */
 export default function HomePage() {
   const { token } = useAuth();
   const [notes, setNotes] = useState([]);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [sort, setSort] = useState('newest');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState(null);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   /**
-   * Reloads the notes list from the API.
+   * Reloads the notes list from the API using current search and sort.
    * @returns {Promise<void>}
    */
   const loadNotes = useCallback(async () => {
     setError('');
     setLoading(true);
     try {
-      const response = await fetchNotes(token);
+      const response = await fetchNotes(token, { q: debouncedSearch, sort });
       setNotes(response.data.notes || []);
     } catch (err) {
       setError(err.message || 'Unable to load notes.');
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, debouncedSearch, sort]);
 
   useEffect(() => {
     loadNotes();
@@ -60,6 +68,8 @@ export default function HomePage() {
     }
   }
 
+  const hasActiveFilters = Boolean(debouncedSearch.trim()) || sort !== 'newest';
+
   return (
     <div className="app-shell">
       <AppHeader />
@@ -74,17 +84,55 @@ export default function HomePage() {
           </Link>
         </div>
 
+        <div className="notes-toolbar glass">
+          <label className="search-field">
+            <span className="sr-only">Search notes</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search notes…"
+              aria-label="Search notes"
+            />
+          </label>
+          <label className="sort-field">
+            <span>Sort by</span>
+            <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort notes">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="title">Title (A–Z)</option>
+            </select>
+          </label>
+        </div>
+
         {error ? <div className="form-alert">{error}</div> : null}
 
         {loading ? <p className="muted">Loading notes…</p> : null}
 
-        {!loading && notes.length === 0 ? (
+        {!loading && notes.length === 0 && !hasActiveFilters ? (
           <div className="empty-state glass">
             <h2>No notes yet</h2>
             <p className="muted">Capture an idea, a list, or a draft. It all lives here.</p>
             <Link className="btn btn-primary" to="/notes/new">
               Create your first note
             </Link>
+          </div>
+        ) : null}
+
+        {!loading && notes.length === 0 && hasActiveFilters ? (
+          <div className="empty-state glass">
+            <h2>No matching notes</h2>
+            <p className="muted">Try a different search term or clear your filters.</p>
+            <button
+              className="btn btn-ghost"
+              type="button"
+              onClick={() => {
+                setSearch('');
+                setSort('newest');
+              }}
+            >
+              Clear filters
+            </button>
           </div>
         ) : null}
 

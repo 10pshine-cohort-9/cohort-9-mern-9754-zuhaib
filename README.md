@@ -128,7 +128,7 @@ Routes: `/` landing, `/signup`, `/login`, `/home` dashboard, `/notes/new`, `/not
 
 **Notes** (JWT required)
 
-- `GET /api/notes`
+- `GET /api/notes` — optional query: `q` (search title/content), `sort` (`newest` | `oldest` | `title`)
 - `GET /api/notes/:id`
 - `POST /api/notes` — `{ title, content }`
 - `PATCH /api/notes/:id` — `{ title, content }`

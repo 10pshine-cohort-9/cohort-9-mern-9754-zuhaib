@@ -10,7 +10,7 @@ const router = express.Router();
  * @type {import('express').RequestHandler}
  */
 const listNotes = asyncHandler(async (req, res) => {
-  const notes = await noteService.listNotes(req.user.id);
+  const notes = await noteService.listNotes(req.user.id, req.query);
   res.status(200).json({ data: { notes } });
 });
 

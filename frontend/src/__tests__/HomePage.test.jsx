@@ -86,4 +86,45 @@ describe('HomePage dashboard', () => {
     await user.click(screen.getByRole('button', { name: /log out/i }));
     expect(mockLogout).toHaveBeenCalled();
   });
+
+  it('passes search and sort filters to the API', async () => {
+    jest.useFakeTimers();
+    mockFetchNotes.mockResolvedValue({ data: { notes: [] } });
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+    renderWithRouter(<HomePage />);
+    await waitFor(() => expect(mockFetchNotes).toHaveBeenCalledWith('test-token', { q: '', sort: 'newest' }));
+
+    await user.type(screen.getByRole('searchbox', { name: /search notes/i }), 'metal');
+    jest.advanceTimersByTime(300);
+
+    await waitFor(() =>
+      expect(mockFetchNotes).toHaveBeenCalledWith('test-token', { q: 'metal', sort: 'newest' })
+    );
+
+    await user.selectOptions(screen.getByRole('combobox', { name: /sort notes/i }), 'title');
+
+    await waitFor(() =>
+      expect(mockFetchNotes).toHaveBeenCalledWith('test-token', { q: 'metal', sort: 'title' })
+    );
+
+    jest.useRealTimers();
+  });
+
+  it('shows a no-results state when filters return nothing', async () => {
+    jest.useFakeTimers();
+    mockFetchNotes.mockResolvedValue({ data: { notes: [] } });
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+    renderWithRouter(<HomePage />);
+    await waitFor(() => expect(mockFetchNotes).toHaveBeenCalled());
+
+    await user.type(screen.getByRole('searchbox', { name: /search notes/i }), 'missing');
+    jest.advanceTimersByTime(300);
+
+    expect(await screen.findByRole('heading', { name: /no matching notes/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /clear filters/i })).toBeInTheDocument();
+
+    jest.useRealTimers();
+  });
 });

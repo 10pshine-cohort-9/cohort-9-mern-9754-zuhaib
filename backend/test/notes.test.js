@@ -56,6 +56,31 @@ describe('Notes API', () => {
       expect(res.status).to.equal(200);
       expect(res.body.data.notes).to.have.length(2);
       expect(res.body.data.notes[0].title).to.equal('One');
+      expect(noteRepository.findAllByUserId.calledOnceWith(1, { search: '', sort: 'newest' })).to.be.true;
+    });
+
+    it('passes search and sort filters to the repository', async () => {
+      const stub = sinon.stub(noteRepository, 'findAllByUserId').resolves([
+        buildNote({ id: 1, title: 'Ideas' }),
+      ]);
+
+      const res = await request(app)
+        .get('/api/notes')
+        .query({ q: 'idea', sort: 'title' })
+        .set(authHeader(token));
+
+      expect(res.status).to.equal(200);
+      expect(stub.calledOnceWith(1, { search: 'idea', sort: 'title' })).to.be.true;
+    });
+
+    it('rejects an invalid sort value', async () => {
+      const res = await request(app)
+        .get('/api/notes')
+        .query({ sort: 'invalid' })
+        .set(authHeader(token));
+
+      expect(res.status).to.equal(400);
+      expect(res.body.code).to.equal('VALIDATION_ERROR');
     });
   });
 
